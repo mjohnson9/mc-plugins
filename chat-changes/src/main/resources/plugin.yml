@@ -1,0 +1,4 @@
+name: chat-changes
+version: 1.0.0-alpha.1
+author: Michael Johnson
+main: computer.johnson.minecraft.chatchanges.Main
