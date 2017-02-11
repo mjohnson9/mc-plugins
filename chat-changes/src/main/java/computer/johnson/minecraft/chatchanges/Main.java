@@ -25,13 +25,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerChatTabCompleteEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * Created by michael on 2/4/2017.
- */
 public class Main extends JavaPlugin implements Listener {
+
 	private static final String chatFormat = "<%1$s" + ChatColor.RESET + "> %2$s" + ChatColor.RESET;
 	private Double radiusSquared;
 
@@ -42,7 +44,7 @@ public class Main extends JavaPlugin implements Listener {
 	@Override
 	public void onEnable() {
 		boolean configValid = this.handleConfig();
-		if(!configValid) {
+		if (!configValid) {
 			// Configuration wasn't valid
 			this.getPluginLoader().disablePlugin(this);
 			return;
@@ -58,7 +60,7 @@ public class Main extends JavaPlugin implements Listener {
 		this.saveConfig();
 
 		double radius = config.getDouble("radius");
-		if(radius <= 0) {
+		if (radius <= 0) {
 			this.getLogger().warning("Not activating: radius must be greater than 0");
 			return false;
 		}
@@ -70,7 +72,7 @@ public class Main extends JavaPlugin implements Listener {
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerSendCommand(PlayerCommandPreprocessEvent event) {
 		Player sender = event.getPlayer();
-		if(sender instanceof ConsoleCommandSender || sender.isOp()) {
+		if (sender instanceof ConsoleCommandSender || sender.isOp()) {
 			// we don't interfere with ops or the console
 			return;
 		}
@@ -88,38 +90,42 @@ public class Main extends JavaPlugin implements Listener {
 		Location receiverLocation = sender.getLocation();
 
 		int sentTo = 0;
-		for(Player receiver : this.getServer().getOnlinePlayers()) {
-			if(receiver.equals(sender))
+		for (Player receiver : this.getServer().getOnlinePlayers()) {
+			if (receiver.equals(sender)) {
 				continue;
-			if(receiver.isDead())
+			}
+			if (receiver.isDead()) {
 				continue;
+			}
 
 			receiver.getLocation(receiverLocation);
-			if(receiverLocation.distanceSquared(senderLocation) > this.radiusSquared)
+			if (receiverLocation.distanceSquared(senderLocation) > this.radiusSquared) {
 				continue;
+			}
 
 			sentTo += 1;
 			receiver.sendMessage(message);
 		}
 
-		this.getLogger().info(ChatColor.stripColor(message) + " (sent to " + String.valueOf(sentTo) + ")");
+		this.getLogger()
+			.info(ChatColor.stripColor(message) + " (sent to " + String.valueOf(sentTo) + ")");
 	}
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerChat(AsyncPlayerChatEvent event) {
 		Player sender = event.getPlayer();
-		if(sender instanceof ConsoleCommandSender) {
+		if (sender instanceof ConsoleCommandSender) {
 			// we don't interfere with the console
 			return;
 		}
 
-		if(sender.isDead()) {
+		if (sender.isDead()) {
 			sender.sendMessage(ChatColor.RED + "You can not chat while dead!" + ChatColor.RESET);
 			event.setCancelled(true);
 			return;
 		}
 
-		if(this.isMessageEmpty(event.getMessage())) {
+		if (this.isMessageEmpty(event.getMessage())) {
 			event.setCancelled(true);
 			return;
 		}
@@ -148,7 +154,7 @@ public class Main extends JavaPlugin implements Listener {
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerTabComplete(PlayerChatTabCompleteEvent event) {
 		Player sender = event.getPlayer();
-		if(sender instanceof ConsoleCommandSender) {
+		if (sender instanceof ConsoleCommandSender) {
 			// we don't interfere with the console
 			return;
 		}

@@ -18,17 +18,15 @@
 package computer.johnson.minecraft.utilities;
 
 import java.lang.reflect.Method;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Created by michael on 2/4/2017.
- */
 public class Names {
+
 	private static final String OBC_PREFIX = Bukkit.getServer().getClass().getPackage().getName();
-	private static final String NMS_PREFIX = OBC_PREFIX.replace("org.bukkit.craftbukkit", "net.minecraft.server");
+	private static final String NMS_PREFIX = OBC_PREFIX
+		.replace("org.bukkit.craftbukkit", "net.minecraft.server");
 	private static Class localeClass;
 	private static Class craftItemStackClass, nmsItemStackClass, nmsItemClass;
 
@@ -37,52 +35,61 @@ public class Names {
 	}
 
 	public static String getFriendlyName(ItemStack itemStack, boolean checkDisplayName) {
-		if(itemStack == null || itemStack.getType() == Material.AIR)
+		if (itemStack == null || itemStack.getType() == Material.AIR) {
 			return "Air";
+		}
 		try {
-			if(craftItemStackClass == null)
+			if (craftItemStackClass == null) {
 				craftItemStackClass = Class.forName(OBC_PREFIX + ".inventory.CraftItemStack");
+			}
 			Method nmsCopyMethod = craftItemStackClass.getMethod("asNMSCopy", ItemStack.class);
 
-			if(nmsItemStackClass == null)
+			if (nmsItemStackClass == null) {
 				nmsItemStackClass = Class.forName(NMS_PREFIX + ".ItemStack");
+			}
 			Object nmsItemStack = nmsCopyMethod.invoke(null, itemStack);
 
 			Object itemName = null;
-			if(checkDisplayName) {
+			if (checkDisplayName) {
 				Method getNameMethod = nmsItemStackClass.getMethod("getName");
 				itemName = getNameMethod.invoke(nmsItemStack);
 			} else {
 				Method getItemMethod = nmsItemStackClass.getMethod("getItem");
 				Object nmsItem = getItemMethod.invoke(nmsItemStack);
 
-				if(nmsItemClass == null)
+				if (nmsItemClass == null) {
 					nmsItemClass = Class.forName(NMS_PREFIX + ".Item");
+				}
 
 				Method getNameMethod = nmsItemClass.getMethod("getName");
 				Object localItemName = getNameMethod.invoke(nmsItem);
 
-				if(localeClass == null)
+				if (localeClass == null) {
 					localeClass = Class.forName(NMS_PREFIX + ".LocaleI18n");
+				}
 				Method getLocaleMethod = localeClass.getMethod("get", String.class);
 
-				Object localeString = localItemName == null ? "" : getLocaleMethod.invoke(null, localItemName);
+				Object localeString =
+					localItemName == null ? "" : getLocaleMethod.invoke(null, localItemName);
 				itemName = ("" + getLocaleMethod.invoke(null, localeString + ".name")).trim();
 			}
-			return itemName != null ? itemName.toString() : capitalizeFully(itemStack.getType().name().replace("_", " ").toLowerCase());
-		} catch(Exception ex) {
+			return itemName != null ? itemName.toString()
+				: capitalizeFully(itemStack.getType().name().replace("_", " ").toLowerCase());
+		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 		return capitalizeFully(itemStack.getType().name().replace("_", " ").toLowerCase());
 	}
 
 	private static String capitalizeFully(String name) {
-		if(name != null) {
-			if(name.length() > 1) {
-				if(name.contains("_")) {
+		if (name != null) {
+			if (name.length() > 1) {
+				if (name.contains("_")) {
 					StringBuilder sbName = new StringBuilder();
-					for(String subName : name.split("_"))
-						sbName.append(subName.substring(0, 1).toUpperCase() + subName.substring(1).toLowerCase()).append(" ");
+					for (String subName : name.split("_")) {
+						sbName.append(subName.substring(0, 1).toUpperCase() + subName.substring(1)
+							.toLowerCase()).append(" ");
+					}
 					return sbName.toString().substring(0, sbName.length() - 1);
 				} else {
 					return name.substring(0, 1).toUpperCase() + name.substring(1).toLowerCase();

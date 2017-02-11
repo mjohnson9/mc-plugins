@@ -17,13 +17,15 @@
 
 package computer.johnson.minecraft.analytics;
 
-import java.util.Map;
+import com.brsanthu.googleanalytics.EventHit;
+import com.brsanthu.googleanalytics.GoogleAnalytics;
+import com.brsanthu.googleanalytics.GoogleAnalyticsConfig;
+import com.brsanthu.googleanalytics.GoogleAnalyticsRequest;
+import com.brsanthu.googleanalytics.PageViewHit;
+import computer.johnson.minecraft.utilities.Names;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.brsanthu.googleanalytics.*;
-import computer.johnson.minecraft.utilities.Names;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -40,14 +42,21 @@ import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerAchievementAwardedEvent;
+import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.player.PlayerBedLeaveEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerLevelChangeEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * Created by michael on 2/3/2017.
- */
 public class Main extends JavaPlugin implements Listener {
+
 	private GoogleAnalytics ga;
 
 	private String minecraftVersion;
@@ -60,15 +69,17 @@ public class Main extends JavaPlugin implements Listener {
 	public void onEnable() {
 		Pattern versionPattern = Pattern.compile(".*\\(.*MC.\\s*([a-zA-z0-9\\-.]+)\\s*\\)");
 		Matcher version = versionPattern.matcher(Bukkit.getVersion());
-		if(version.matches() && version.group(1) != null) {
+		if (version.matches() && version.group(1) != null) {
 			minecraftVersion = version.group(1);
 		} else {
 			minecraftVersion = "Unknown";
-			getLogger().warning("Unable to extract the current Minecraft version from \"" + Bukkit.getVersion() + "\"");
+			getLogger().warning(
+				"Unable to extract the current Minecraft version from \"" + Bukkit.getVersion()
+					+ "\"");
 		}
 
 		boolean configValid = handleConfig();
-		if(!configValid) {
+		if (!configValid) {
 			// Configuration wasn't valid
 			getPluginLoader().disablePlugin(this);
 			return;
@@ -84,15 +95,16 @@ public class Main extends JavaPlugin implements Listener {
 		saveConfig();
 
 		String propertyID = config.getString("property-id");
-		if(propertyID.length() == 0) {
-			getLogger().warning("Not activating: you must set the property ID in the configuration");
+		if (propertyID.length() == 0) {
+			getLogger()
+				.warning("Not activating: you must set the property ID in the configuration");
 			return false;
 		}
 
 		GoogleAnalyticsConfig gaConfig = new GoogleAnalyticsConfig();
 
 		String userAgent = System.getProperty("http.agent", "");
-		if(userAgent.length() > 0) {
+		if (userAgent.length() > 0) {
 			gaConfig.setUserAgent(userAgent);
 		}
 
@@ -121,7 +133,7 @@ public class Main extends JavaPlugin implements Listener {
 
 		// Position
 		Location location = player.getLocation();
-		if(location != null) {
+		if (location != null) {
 			setEventLocation(request, location);
 		}
 	}
@@ -142,7 +154,8 @@ public class Main extends JavaPlugin implements Listener {
 		EventHit quitEvent = constructEvent(event.getPlayer(), "Presence", "Leave");
 		quitEvent.sessionControl("end");
 		quitEvent.nonInteractionHit("1");
-		quitEvent.eventLabel(makeMessageGeneric(event.getQuitMessage(), event.getPlayer().getDisplayName()));
+		quitEvent.eventLabel(
+			makeMessageGeneric(event.getQuitMessage(), event.getPlayer().getDisplayName()));
 		sendTrack(quitEvent);
 	}
 
@@ -184,15 +197,15 @@ public class Main extends JavaPlugin implements Listener {
 		deathEvent.customMetric(3, String.valueOf(event.getDroppedExp()));
 
 		EntityDamageEvent lastDamage = victim.getLastDamageCause();
-		if(lastDamage != null) {
-			if(lastDamage instanceof EntityDamageByEntityEvent) {
-				EntityDamageByEntityEvent damageByEntity = (EntityDamageByEntityEvent)lastDamage;
+		if (lastDamage != null) {
+			if (lastDamage instanceof EntityDamageByEntityEvent) {
+				EntityDamageByEntityEvent damageByEntity = (EntityDamageByEntityEvent) lastDamage;
 				Entity damager = damageByEntity.getDamager();
-				if(damager instanceof Player) {
+				if (damager instanceof Player) {
 					deathEvent.eventLabel("Player: " + damager.getName());
-				} else if(damager instanceof Tameable) {
-					Tameable tamedAnimal = (Tameable)damager;
-					if(tamedAnimal.isTamed()) {
+				} else if (damager instanceof Tameable) {
+					Tameable tamedAnimal = (Tameable) damager;
+					if (tamedAnimal.isTamed()) {
 						deathEvent.eventLabel("Player: " + tamedAnimal.getOwner().getName());
 					} else {
 						deathEvent.eventLabel(damager.getName());
@@ -210,7 +223,7 @@ public class Main extends JavaPlugin implements Listener {
 
 	private void trackKill(PlayerDeathEvent event) {
 		Player killer = event.getEntity().getKiller();
-		if(killer == null) {
+		if (killer == null) {
 			return;
 		}
 
@@ -224,7 +237,7 @@ public class Main extends JavaPlugin implements Listener {
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
 		EventHit respawnEvent = constructEvent(event.getPlayer(), "Combat", "Respawn");
-		if(event.isBedSpawn()) {
+		if (event.isBedSpawn()) {
 			respawnEvent.eventLabel("Bed");
 		} else {
 			respawnEvent.eventLabel("Wild");
@@ -284,9 +297,9 @@ public class Main extends JavaPlugin implements Listener {
 
 		levelChangeEvent.eventValue(newLevel);
 
-		if(newLevel > oldLevel) {
+		if (newLevel > oldLevel) {
 			levelChangeEvent.eventAction("Increase");
-		} else if(newLevel < oldLevel) {
+		} else if (newLevel < oldLevel) {
 			levelChangeEvent.eventAction("Decrease");
 		} else {
 			// the level didn't change?
@@ -314,15 +327,15 @@ public class Main extends JavaPlugin implements Listener {
 		ItemStack item = event.getItem();
 
 		builder.append(Names.getFriendlyName(item));
-		if(item.getAmount() != 1) {
+		if (item.getAmount() != 1) {
 			builder.append(" x");
 			builder.append(item.getAmount());
 		}
 		builder.append(" <- ");
 
 		boolean first = true;
-		for(Entry<Enchantment, Integer> entry : event.getEnchantsToAdd().entrySet()) {
-			if(first) {
+		for (Entry<Enchantment, Integer> entry : event.getEnchantsToAdd().entrySet()) {
+			if (first) {
 				first = false;
 			} else {
 				builder.append(", ");

@@ -29,9 +29,6 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
-/**
- * Created by michael on 2/7/2017.
- */
 public class RandomRespawn extends JavaPlugin implements Listener {
 
 	private double minDistance = 0;

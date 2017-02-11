@@ -17,15 +17,18 @@
 
 package computer.johnson.minecraft.hideplayers;
 
-import java.lang.reflect.InvocationTargetException;
-
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
-import com.comphenix.protocol.events.*;
+import com.comphenix.protocol.events.ListenerPriority;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.events.PacketListener;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedServerPing;
+import java.lang.reflect.InvocationTargetException;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -34,10 +37,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * Created by michael on 2/5/2017.
- */
 public class Main extends JavaPlugin implements Listener {
+
 	private ProtocolManager protocolManager;
 	private PacketListener tabListListener;
 	private PacketListener pingListener;
@@ -47,11 +48,11 @@ public class Main extends JavaPlugin implements Listener {
 
 	@Override
 	public void onDisable() {
-		if(this.tabListListener != null) {
+		if (this.tabListListener != null) {
 			this.protocolManager.removePacketListener(this.tabListListener);
 			this.tabListListener = null;
 		}
-		if(this.pingListener != null) {
+		if (this.pingListener != null) {
 			this.protocolManager.removePacketListener(this.pingListener);
 			this.pingListener = null;
 		}
@@ -60,7 +61,7 @@ public class Main extends JavaPlugin implements Listener {
 	@Override
 	public void onEnable() {
 		boolean configValid = this.handleConfig();
-		if(!configValid) {
+		if (!configValid) {
 			// Configuration wasn't valid
 			this.getPluginLoader().disablePlugin(this);
 			return;
@@ -81,14 +82,16 @@ public class Main extends JavaPlugin implements Listener {
 		config.options().copyDefaults(true);
 		this.saveConfig();
 
-		String headerText = ChatColor.translateAlternateColorCodes('&', config.getString("header", "").trim());
-		if(ChatColor.stripColor(headerText).length() > 0) {
+		String headerText = ChatColor
+			.translateAlternateColorCodes('&', config.getString("header", "").trim());
+		if (ChatColor.stripColor(headerText).length() > 0) {
 			this.header = WrappedChatComponent.fromText(headerText);
 		} else {
 			this.header = null;
 		}
-		String footerText = ChatColor.translateAlternateColorCodes('&', config.getString("footer", "").trim());
-		if(ChatColor.stripColor(footerText).length() > 0) {
+		String footerText = ChatColor
+			.translateAlternateColorCodes('&', config.getString("footer", "").trim());
+		if (ChatColor.stripColor(footerText).length() > 0) {
 			this.footer = WrappedChatComponent.fromText(footerText);
 		} else {
 			this.footer = null;
@@ -97,7 +100,8 @@ public class Main extends JavaPlugin implements Listener {
 	}
 
 	private PacketAdapter createPingListener() {
-		return new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Status.Server.SERVER_INFO) {
+		return new PacketAdapter(this, ListenerPriority.NORMAL,
+			PacketType.Status.Server.SERVER_INFO) {
 			@Override
 			public void onPacketSending(PacketEvent event) {
 				PacketContainer packet = event.getPacket();
@@ -117,15 +121,17 @@ public class Main extends JavaPlugin implements Listener {
 	}
 
 	private void sendListHeaderFooter(Player player) throws InvocationTargetException {
-		if(this.header == null && this.footer == null)
+		if (this.header == null && this.footer == null) {
 			return; // no work to do
+		}
 
-		PacketContainer packet = this.protocolManager.createPacket(PacketType.Play.Server.PLAYER_LIST_HEADER_FOOTER);
+		PacketContainer packet = this.protocolManager
+			.createPacket(PacketType.Play.Server.PLAYER_LIST_HEADER_FOOTER);
 		StructureModifier<WrappedChatComponent> components = packet.getChatComponents();
-		if(this.header != null) {
+		if (this.header != null) {
 			components.write(0, header);
 		}
-		if(this.footer != null) {
+		if (this.footer != null) {
 			components.write(1, footer);
 		}
 		this.protocolManager.sendServerPacket(player, packet);
