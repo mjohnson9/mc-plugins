@@ -23,7 +23,7 @@
 
     <groupId>computer.johnson.minecraft</groupId>
     <artifactId>utilities</artifactId>
-	<version>DEVELOPMENT</version>
+	<version>1.0.0-alpha.1</version>
 
 
     <repositories>
