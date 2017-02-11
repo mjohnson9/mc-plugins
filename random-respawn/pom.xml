@@ -23,7 +23,7 @@
 
     <groupId>computer.johnson.minecraft</groupId>
     <artifactId>random-respawn</artifactId>
-    <version>1.0.0-alpha.1</version>
+	<version>DEVELOPMENT</version>
 
     <repositories>
         <repository>

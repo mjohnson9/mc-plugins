@@ -1,5 +1,5 @@
 name: hide-players
-version: 1.0.0-alpha.1
+version: DEVELOPMENT
 author: Michael Johnson
 main: computer.johnson.minecraft.hideplayers.Main
 depend: [ProtocolLib]
